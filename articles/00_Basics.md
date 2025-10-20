@@ -114,47 +114,49 @@ clear()
 
 # --- Till two columns for carrots ---
 for i in range(get_world_size()):
-    till()
-    move(North)
+	till()
+	plant(Entities.Carrot)
+	move(North)
 move(East)
 for i in range(get_world_size()):
-    till()
-    move(North)
+	till()
+	plant(Entities.Carrot)
+	move(North)
 move(West) # return to orginal 
 
 
 # --- Main farming loop ---
 while True:
-    # Column 1 – Carrots
-    for i in range(get_world_size()):
-        if can_harvest():
-            harvest()
-            plant(Entities.Carrot)
-        move(North)
-    move(East)
+	# Column 1 – Carrots
+	for i in range(get_world_size()):
+		if can_harvest():
+			harvest()
+			plant(Entities.Carrot)
+		move(North)
+	move(East)
 
-    # Row 2 – Carrots
-    for i in range(get_world_size()):
-        if can_harvest():
-            harvest()
-            plant(Entities.Carrot)
-        move(North)
-    move(East)
+	# Row 2 – Carrots
+	for i in range(get_world_size()):
+		if can_harvest():
+			harvest()
+			plant(Entities.Carrot)
+		move(North)
+	move(East)
 
-    # Row 3 – Bushes
-    for i in range(get_world_size()):
-        if can_harvest():
-            harvest()
-            plant(Entities.Bush)
-        move(North)
-    move(East)
+	# Row 3 – Bushes
+	for i in range(get_world_size()):
+		if can_harvest():
+			harvest()
+			plant(Entities.Bush)
+		move(North)
+	move(East)
 
-    # Row 4 – Grass
-    for i in range(get_world_size()):
-        if can_harvest():
-            harvest()
-        move(North)
-    move(East)
+	# Row 4 – Grass
+	for i in range(get_world_size()):
+		if can_harvest():
+			harvest()
+		move(North)
+	move(East)
 ```
 
 ---
@@ -191,63 +193,70 @@ If you find yourself repeating code (like planting a full column), wrap it in a 
 
 ```python
 def farm_column(crop):
-    for i in range(get_world_size()):
-        if can_harvest():
-            harvest()
-            plant(crop)
-        move(North)
-    move(East)
+	for i in range(get_world_size()):
+		if can_harvest():
+			harvest()
+			plant(crop)
+		move(North)
+
+def plant_column(n, crop):
+	# Till n columns 
+	for _ in range(n):
+		for i in range(get_world_size()):
+			if (crop == Entities.Carrot):
+				till()
+			plant(crop)
+			move(North)
+		move(East)
+	for _ in range(n):
+		move(West)
 ```
 
 Then your main loop becomes beautifully clean:
 
 ```python
+
+# --- Main farming program ---
+
+clear()
+plant_column(2, Entities.Carrot)
+
+crops = [Entities.Carrot, Entities.Carrot, Entities.Bush, Entities.Grass]
+
 while True:
-    for crop in [Entities.Carrot, Entities.Carrot, Entities.Bush, Entities.Grass]:
-        farm_column(crop)
+	for i in range(len(crops)):
+		crop = crops[i]
+		farm_column(crop)
+		move(East)
+
 ```
 
 You can even move these helper functions to another file — say, `farm_utils.py` — and import them:
 
 ```python
-from farm_utils import plant_crop_column
+import farm_utils
 ```
 
 That’s how you start writing **modular code** — reusable, organized, and scalable.
 
 ``` python
 
-def till_column(n):
-    # Till n columns 
-    for _ in range(n):
-        for i in range(get_world_size()):
-            till()
-            move(North)
-        move(East)
-    for _ in range(n):
-        move(West)
-
-
-def plant_crop_column(crop_type):
-    """Plant one full column of a specific crop"""
-    for _ in range(get_world_size()):
-        if can_harvest():
-            harvest()
-            plant(crop_type)
-        move(North)
-
-# --- Main Program ---
 import farm_utils
 
 clear()
-farm_utils.till_column(2)
+farm_utils.plant_column(2, Entities.Carrot)
+
+crops = [Entities.Carrot, Entities.Carrot, Entities.Bush, Entities.Grass]
 
 while True:
-    for crop in [Entities.Carrot, Entities.Carrot, Entities.Bush, Entities.Grass]:
-        farm_utils.plant_crop_column(crop)
-        move(East)
+	for i in range(len(crops)):
+		crop = crops[i]
+		farm_utils.farm_column(crop)
+		move(East)
 
 ```
+
+![4 Columns Crop](../assets/4_columns_crop.png)
 
 ---
 
@@ -261,7 +270,7 @@ By this point, you’ve already touched on some **core programming concepts**:
 * Functions
 * Imports and modularity
 
-And you learned them all while running a cute little farm.
+And you’ve learned all of this while running your own cozy little farm! As your fields grow, I’m sure you’ll have no trouble adapting the code to handle larger plots and more complex routines.
 
 Let your drone run for a while — gather more resources, and get ready for the next chapter: **advanced crop logic and automation strategies**.
 
