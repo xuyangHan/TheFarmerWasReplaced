@@ -2,7 +2,7 @@
 
 ## Recap
 
-In the [previous post](#), we started automating our basic farm — planting crops in simple rows and loops.
+In the [previous post](00_Basics.md), we started automating our basic farm — planting crops in simple rows and loops.
 By now, you’ve probably unlocked more **resources** and **programming abilities**, and your code might be getting a bit repetitive.
 
 Let’s clean that up by **refactoring** your farming logic into reusable helper functions inside `farm_utils`.
@@ -118,7 +118,6 @@ Let’s apply that logic — plant trees on “dark” tiles (where `x + y` is e
 You’ll also need to leave **two lines for grass**, since carrots require grass as a base crop.
 
 ```python
-import navigation
 import farm_utils
 
 clear()
@@ -140,6 +139,18 @@ while True:
                 plant(Entities.Carrot)
         move(North)
     move(East)
+```
+
+```python
+# farm_utils.py
+def till_columns(n):
+	for i in range(n):
+		for j in range(get_world_size()):
+			till()
+			move(North)
+		move(East)
+	for i in range(n):
+		move(West)
 ```
 
 ![Plant Trees](../assets/plant_trees.jpg)
