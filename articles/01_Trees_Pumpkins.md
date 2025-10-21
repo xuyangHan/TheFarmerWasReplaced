@@ -2,6 +2,10 @@
 
 ## Recap
 
+If you’re curious about programming but don’t want to start with dry tutorials, [**The Farmer Was Replaced**](https://store.steampowered.com/app/2060160/The_Farmer_Was_Replaced/) is a surprisingly fun way to learn.
+
+![4 Columns Crop](../assets/4_columns_crop.png)
+
 In the [previous post](00_Basics.md), we started automating our basic farm — planting crops in simple rows and loops.
 By now, you’ve probably unlocked more **resources** and **programming abilities**, and your code might be getting a bit repetitive.
 
