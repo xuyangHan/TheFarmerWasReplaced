@@ -35,3 +35,12 @@ def goto_naive(x_target, y_target):
 			move(dirY)
 			steps_y -= 1
 		
+def dinosaur_safe_move(direction):
+	# Move in the given direction if possible.
+	# If movement is blocked, temporarily change hats as a workaround.
+	
+	if can_move(direction):
+		move(direction)
+	else:
+		change_hat(Hats.Carrot_Hat)
+		change_hat(Hats.Dinosaur_Hat)
