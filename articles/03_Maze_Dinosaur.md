@@ -238,4 +238,194 @@ In short: you’re turning a few lines of code into a **self-sustaining farm mac
 
 ---
 
-## Maze
+## 🧩 Maze
+
+Now that we’ve stocked up enough **Weird_Substance**, it’s time to tackle one of the most interesting parts of *The Farmer Was Replaced*: the **Maze** puzzle.
+
+### Creating the Maze
+
+Based on the in-game descriptions, we can generate a maze using the following snippet:
+
+```python
+plant(Entities.Bush)
+substance = get_world_size() * 2**(num_unlocked(Unlocks.Mazes) - 1)
+use_item(Items.Weird_Substance, substance)
+```
+
+Here’s what’s happening:
+
+* `plant(Entities.Bush)` fills the entire farm with bushes — these act as the maze’s **walls**.
+* Then, `use_item(Items.Weird_Substance, substance)` carves out **walkable paths** through those bushes, forming a randomly generated maze.
+
+The amount of Weird_Substance used scales with your progress:
+
+* As you unlock more maze-related upgrades, the formula `2**(num_unlocked(Unlocks.Mazes) - 1)` makes the maze larger and more complex.
+
+Once this step finishes, your farm transforms into a proper maze — with one treasure hidden somewhere deep inside.
+
+Your next mission: **find the path and harvest the treasure**.
+
+![Maze](../assets/Maze.png)
+
+### 🧭 “Hand on the Wall” Rule
+
+There are [many algorithms](https://en.wikipedia.org/wiki/Maze-solving_algorithm) to solve mazes — from depth-first search to A*, to more heuristic-based ones.
+But in our case, we’ll start simple with a time-tested and intuitive approach: the **“Hand on the Wall” rule**.
+
+Here’s the key insight from the game’s description:
+
+> Mazes do not contain any loops unless you reuse the maze. So there is no way for the drone to end up in the same position again without going back.
+
+That means our maze is **simply connected** — all walls form one continuous boundary, with no enclosed loops.
+In such mazes, keeping one hand (say, your **right hand**) on the wall while walking guarantees you’ll eventually reach the goal.
+
+![Hand on the Wall](../assets/MazeHandOnWallRule.png)
+
+That’s what we’ll code next.
+
+### 💡 Coding the Maze Solver
+
+We’ll implement this rule in three stages:
+
+#### 1️⃣ Direction Helpers
+
+We first need a way to manage directions — turning left, right, and keeping track of orientation.
+
+```python
+dirs = [East, South, West, North]
+dirs_index = {East: 0, South: 1, West: 2, North: 3}
+
+def get_right_dir(dir):
+    return dirs[(dirs_index[dir] + 1) % 4]
+
+def get_left_dir(dir):
+    return dirs[(dirs_index[dir] - 1) % 4]
+```
+
+**What’s happening:**
+
+* The list `dirs` defines a **clockwise order**: East → South → West → North.
+* `get_right_dir(dir)` finds the next direction clockwise (i.e., a right turn).
+* `get_left_dir(dir)` finds the next direction counterclockwise (i.e., a left turn).
+
+This modular arithmetic (`% 4`) makes turning directions clean and cyclic — no messy if-else logic needed.
+
+#### 2️⃣ Maze Generation
+
+We can wrap the maze creation logic into a simple loop for repeated experimentation:
+
+```python
+clear()
+n = get_world_size()
+
+while True:
+    # Fill everything with bushes
+    plant(Entities.Bush)
+    # Use Weird_Substance to carve the maze
+    substance = get_world_size() * 2**(num_unlocked(Unlocks.Mazes) - 1)
+    use_item(Items.Weird_Substance, substance)
+```
+
+Every run generates a new random maze, ensuring plenty of variety for testing your solver.
+
+#### 3️⃣ Wall-Following Traversal
+
+Now comes the fun part — **navigating the maze**.
+
+```python
+dir = North
+while True:
+    if can_move(get_right_dir(dir)):
+        dir = get_right_dir(dir)
+        move(dir)
+    else:
+        dir = get_left_dir(dir)
+    if get_entity_type() == Entities.Treasure:
+        harvest()
+        break
+```
+
+Let’s unpack it step by step:
+
+1. **Initialization**
+   The drone starts facing `North`.
+
+2. **Wall-Following Logic**
+   At every step, the drone:
+
+   * Checks if it can move **to the right** of its current facing direction.
+
+     * If yes → it **turns right and moves forward**.
+   * Otherwise → it **turns left**, keeping itself aligned with the wall.
+
+     * (Notice that “turning left” here doesn’t move the drone — it just reorients it.)
+
+   This pattern ensures the drone **sticks to one side of the maze wall**, never losing its way.
+
+3. **Treasure Detection**
+   Whenever the drone encounters `Entities.Treasure`, it simply:
+
+   ```python
+   harvest()
+   break
+   ```
+
+   and ends the loop.
+
+#### ✅ Putting It All Together
+
+``` python
+dirs = [East, South, West, North]
+dirs_index = {East: 0, South: 1, West: 2, North: 3}
+
+def get_right_dir(dir):
+	return dirs[(dirs_index[dir] + 1) % 4]
+
+def get_left_dir(dir):
+	return dirs[(dirs_index[dir] - 1) % 4]
+
+clear()
+n = get_world_size()
+
+while True:
+	plant(Entities.Bush)
+	substance = get_world_size() * 2**(num_unlocked(Unlocks.Mazes) - 1)
+	use_item(Items.Weird_Substance, substance)
+	dir = North
+	while True:
+		if can_move(get_right_dir(dir)):
+			dir = get_right_dir(dir)
+			move(dir)
+		else:
+			dir = get_left_dir(dir)
+		if get_entity_type() == Entities.Treasure:
+			harvest()
+			break
+```
+
+So, in summary:
+
+1. **Generate** the maze with bushes and Weird_Substance.
+2. **Follow** one wall using simple directional logic.
+3. **Harvest** the treasure once found.
+
+This right-hand rule guarantees success in any **loop-free maze**, and it’s a perfect introduction to algorithmic thinking in automation — you’re not just solving the puzzle, you’re encoding a **general strategy**.
+
+Congratulations — you’ve built your first autonomous maze-solving drone. 🚀
+
+---
+
+## 🌾 Final Thoughts
+
+In this post, we explored two classic programming problems hidden inside The Farmer Was Replaced:
+the Dinosaur game — inspired by Hamiltonian paths, and the Maze solver — powered by the simple but elegant wall-following rule.
+
+Both are great examples of how fundamental algorithms can emerge naturally from gameplay.
+You didn’t need advanced data structures or math-heavy pathfinding — just clear logic and consistent rules.
+
+In the next post, things will scale up.
+We’ll go from one drone solving puzzles to multiple drones working together — unlocking the Mega Farm and learning how to coordinate tasks, avoid conflicts, and think in terms of parallelism and multi-threading.
+
+It’s where your farm — and your code — start feeling truly alive.
+
+Stay tuned 🌱
