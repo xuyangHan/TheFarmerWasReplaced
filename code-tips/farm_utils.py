@@ -20,6 +20,16 @@ def plant_columns(crops):
 		crop = crops[i]
 		plant_column(crop)
 		move(East)
+
+def plant_all(crop):
+	need_till_list = [Entities.Carrot, Entities.Pumpkin, Entities.Cactus, Entities.Sunflower]
+	for i in range(get_world_size()):
+		for j in range(get_world_size()):
+			if (crop in need_till_list and get_ground_type() != Grounds.Soil):
+				till()
+			plant(crop)
+			move(North)
+		move(East)
 		
 def till_columns(n):
 	for i in range(n):

@@ -130,4 +130,112 @@ We’ll revisit these optimizations later. For now, enjoy watching your pixelate
 
 --- 
 
-## 
+## 🧪 Maze Prep
+
+Before we dive into solving the **maze puzzle**, let’s cover a few essential preparations — specifically, how to **unlock the maze** and gather the materials required for it.
+
+### 1. Unlocking the Maze: The Role of *Weird Substance*
+
+To generate a maze, you’ll need a special material called **Weird_Substance**, which can be crafted indirectly through **Fertilizer**.
+
+Here’s how the game describes it:
+
+> “Fertilizer can make plants grow instantly.
+> `use_item(Items.Fertilizer)` reduces the remaining growing time of the plant under the drone by 2 seconds.
+> This has some side effects — plants grown with fertilizer will be *infected*.
+> When an infected plant is harvested, half of its yield turns into `Items.Weird_Substance`.”
+
+In other words:
+
+* **Fertilizer** accelerates plant growth,
+* but **infects** the plant,
+* producing **Weird_Substance** upon harvest.
+
+That’s a key resource for unlocking **Mazes**, so we’ll automate its generation next.
+
+### 2. Automating *Weird_Substance* Production
+
+Here’s a simple farming loop that continuously grows and harvests **Trees** — using fertilizer each time to guarantee infection and Weird_Substance yield:
+
+```python
+while True:
+    navigation.goto_naive(0, 0)
+    harvest()
+    use_item(Items.Water)
+    plant(Entities.Tree)
+    use_item(Items.Fertilizer)
+```
+
+This alone already provides a reliable supply.
+But we can go a step further and **boost efficiency** with another mechanic you’ve likely unlocked by now.
+
+### 3. Boosting Yield with *Polyculture*
+
+Once the **Polyculture** upgrade is available, plants will yield **extra resources when planted alongside compatible crops**.
+
+You can find which plants go well together using:
+
+```python
+plant_type, (x, y) = get_companion()
+```
+
+This built-in function tells you:
+
+* what type of **companion crop** to plant (`plant_type`), and
+* at which **grid position** (`x, y`) it should go.
+
+Companion preferences are usually one of:
+`Entities.Grass`, `Entities.Bush`, `Entities.Tree`, or `Entities.Carrot`.
+
+This mechanic synergizes perfectly with our Weird_Substance loop — giving you both *extra resources* and *faster regeneration*.
+
+---
+
+### 4. Putting It All Together
+
+We’ll use a **small 3×3 or 5×5 farm** for quick cycling and efficiency.
+Here’s the plan:
+
+1. At **(0, 0)** — grow a Tree with Fertilizer (to trigger Weird_Substance generation).
+2. After planting, call `get_companion()` to locate and plant the companion crop.
+3. Visit that location, harvest any existing crop, and plant the new one.
+4. Return to (0, 0) to harvest and repeat.
+
+Here’s the full working loop:
+
+```python
+import navigation
+import farm_utils
+
+clear()
+set_world_size(5)
+farm_utils.till_all()
+
+while True:
+    navigation.goto_naive(0, 0)
+    harvest()
+    use_item(Items.Water)
+    plant(Entities.Tree)
+    use_item(Items.Fertilizer)
+    
+    pl, (x, y) = get_companion()
+    navigation.goto_naive(x, y)
+    harvest()
+    plant(pl)
+```
+
+### 5. Why This Works
+
+This setup forms a **micro feedback loop** — one of the core automation concepts in *The Farmer Was Replaced*.
+
+* You grow → harvest → replant automatically.
+* Each cycle yields both **crops** and **Weird_Substance**.
+* The companion mechanic ensures **higher overall yield per cycle**.
+
+![Tree Companion](../assets/tree_companion.jpg)
+
+In short: you’re turning a few lines of code into a **self-sustaining farm machine** that generates a lot Weird_Substance!
+
+---
+
+## Maze
