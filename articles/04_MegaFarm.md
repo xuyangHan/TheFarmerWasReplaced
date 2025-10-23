@@ -244,4 +244,149 @@ def plant_line():
 
 ---
 
-## cactus
+## 🌵 Cactus Sorting
+
+Now, let’s revisit the **cactus sorting** task.
+
+Previously, we only had **one drone** sorting each row and column sequentially — a slow and repetitive process.
+With **multiple drones**, we can now assign **one line per drone**, allowing the farm to **sort every row and column in parallel**.
+
+The principle is the same as the previous two sections:
+
+* Spawn drones to handle the first `n - 1` rows or columns.
+* Let the **main drone** handle the final one.
+* Synchronize all drones before moving to the next phase.
+
+### 🧩 Drone Tasks
+
+We define two separate drone tasks — one for sorting **rows**, one for **columns**.
+
+```python
+# 🪴 Task 1: Plant and sort each row
+def drone_plant_and_sort_row():
+    (start_x, start_y) = (get_pos_x(), get_pos_y())  # Remember starting position
+    
+    # Step 1: Plant cactus across this row
+    for i in range(n):
+        if get_ground_type() == Grounds.Grassland:  # Prepare soil if needed
+            till()
+        harvest()                                  # Clear any existing entity
+        plant(Entities.Cactus)                     # Plant cactus
+        move(East)                                 # Move to next tile
+    
+    # Step 2: Sort this row using bubble sort logic
+    sort_line(start_x, start_y, East)
+
+
+# 🌵 Task 2: Sort an existing column
+def drone_sort_line():
+    sort_line(get_pos_x(), get_pos_y(), North)
+```
+
+> 🧠 **Concept**:
+>
+> * The first task both **plants and sorts** (used for rows).
+> * The second task **sorts only**, assuming crops are already planted (used for columns).
+
+### 🚀 Deploy the Drones
+
+Here’s how we orchestrate all drones to work together efficiently:
+
+```python
+while True:
+    navigation.goto_naive(0, 0)
+    
+    # --- Phase 1: each drone plants and sorts one row ---
+    drones = set()
+    for i in range(n):
+        drone = spawn_drone(drone_plant_and_sort_row)
+        if not drone:
+            # If no slot available, main drone does the task itself
+            drone_plant_and_sort_row()
+        else:
+            drones.add(drone)
+        move(North)  # Move to the next row
+
+    # Wait for all drones to finish before moving on
+    navigation.goto_naive(0, 0)
+    wait_for_all_drones(drones)
+    
+
+    # --- Phase 2: each drone sorts one column ---
+    for i in range(n):
+        drone = spawn_drone(drone_sort_line)
+        if not drone:
+            drone_sort_line()
+        else:
+            drones.add(drone)
+        move(East)  # Move to the next column
+
+    # Wait again before harvesting
+    wait_for_all_drones(drones)
+    harvest()
+```
+
+🧩 **Key ideas**:
+
+* After finishing one task, drones **disappear automatically**, freeing up capacity for the next batch.
+* The **main drone acts as coordinator**, spawning new workers and waiting until all finish.
+* The helper `wait_for_all_drones()` ensures synchronization — a critical step in multi-thread logic.
+
+### 🧰 Inside `farm_utils.py`
+
+Let’s look at the helper functions that make this process work smoothly.
+
+```python
+def wait_for_all_drones(drones_set):
+    # Keep checking until all drones in the set have finished their tasks.
+    while len(drones_set) > 0:
+        removed_drones = []
+        for drone in drones_set:
+            if has_finished(drone):         # If this drone’s task is done
+                removed_drones.append(drone)
+        for removed_drone in removed_drones:
+            drones_set.remove(removed_drone)
+```
+
+* Maintains a **set of active drones**.
+* Continuously checks if any drone has finished (using `has_finished(drone)`).
+* Removes completed drones from the set until the set becomes empty — i.e., all done.
+
+### 🪄 Sorting Logic
+
+The `sort_line()` function uses a **bubble sort** to organize entities in a line, comparing neighboring tiles using `measure()` and swapping when necessary.
+
+```python
+def sort_line(start_x, start_y, direction):
+    # Bubble sort implementation to sort a line of crops.
+    navigation.goto_naive(start_x, start_y)
+    
+    for i in range(n):
+        navigation.goto_naive(start_x, start_y)
+        swap_count = 0
+        for j in range(n - 1 - i):
+            if measure() > measure(direction):  # Compare with next tile
+                swap_count += 1
+                swap(direction)                 # Swap if out of order
+            move(direction)                     # Continue along the line
+        if swap_count == 0:
+            break  # Stop early if already sorted
+```
+
+### ✅ Highlights of this approach
+
+* **Parallel efficiency**: multiple drones now handle sorting simultaneously.
+* **Reusable logic**: `sort_line()` and `wait_for_all_drones()` can be applied to other multi-drone farming tasks.
+* **Clean synchronization**: using `wait_for_all_drones()` ensures no race conditions or premature harvesting.
+* **Dynamic reuse**: drones vanish after finishing, allowing reuse in subsequent phases.
+
+---
+
+## Final Thoughts
+
+In this post, we explored how **multiple drones** can collaborate to farm efficiently — a concept that mirrors real-world **parallelism and multithreading**.
+
+By spawning a fleet of autonomous workers, each handling its own crop line, we transformed our single-drone logic into a distributed system. The coordination between these drones — waiting for signals, checking shared states (like the giant pumpkin), and dividing labor — is exactly how concurrent tasks operate in larger software systems.
+
+The beauty of this approach lies in its simplicity: every drone runs the same function, yet together they form a **self-organizing system**. Tasks get done faster, responsibilities are isolated, and the overall process feels like watching a **synchronized ballet of bots** — elegant, efficient, and a little mesmerizing. 🤖🎃🌾
+
