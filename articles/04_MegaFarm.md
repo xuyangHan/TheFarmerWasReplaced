@@ -332,6 +332,8 @@ while True:
 * The **main drone acts as coordinator**, spawning new workers and waiting until all finish.
 * The helper `wait_for_all_drones()` ensures synchronization — a critical step in multi-thread logic.
 
+![MegaFarm Cactus](../assets/sorted_cactus.jpg)
+
 ### 🧰 Inside `farm_utils.py`
 
 Let’s look at the helper functions that make this process work smoothly.
